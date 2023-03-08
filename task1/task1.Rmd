@@ -2,6 +2,7 @@
 title: "Методы статистической обработки информации - Задание 1"
 author: "Ершов А. С., гр. 22.М04-мм"
 output:
+  html_notebook: default
   pdf_document:
     latex_engine: xelatex
     includes:
@@ -28,28 +29,34 @@ Cores <- c(26,36,19,10,5,4)
 df <- data.frame(Anomalies, Cores)
 ```
 
+```{r}
+data <- rep(c(0,1,2,3,4,5),times=c(26,36,19,10,5,4))
+print(data)
+```
+
+
 Рассчитаем заданные величины.
 
 Среднее:
 
 ```{r}
-result.mean <- round(mean(df$Cores), 1)
+result.mean <- round(mean(data), 1)
 print(result.mean)
 ```
 Дисперсия:
 ```{r}
-result.var <- round(var(df$Cores), 1)
+result.var <- round(var(data), 1)
 print(result.var)
 ```
 Асимметрия:
 ```{r}
 library(moments)
-result.skewness <- round(skewness(df$Cores), 1)
+result.skewness <- round(skewness(data), 1)
 print(result.skewness)
 ```
 Эксцесс:
 ```{r}
-result.kurtosis <- round(kurtosis(df$Cores), 1)
+result.kurtosis <- round(kurtosis(data), 1)
 print(result.kurtosis)
 ```
 
