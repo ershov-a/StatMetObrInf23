@@ -1,0 +1,66 @@
+---
+title: "СтатМетОбрИнф23 - Задание 1"
+author: "Ершов А. С., гр. 22.М04-мм"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  html_notebook: default
+  word_document: default
+---
+
+Задание: по реальным данным найти среднее, дисперсию, рассеяние, ассиметрию, эксцесс.
+
+![](tasks.png){width="400px"}
+
+Мой вариант: in vitro, 35 Гр.
+
+Выполнено на языке R в R Notebook.
+
+---
+
+Сохраним данные в датафрейме `df`.
+
+```{r}
+Anomalies <- c(0,1,2,3,4,5)
+Cores <- c(26,36,19,10,5,4)
+df <- data.frame(Anomalies, Cores)
+```
+
+Рассчитаем заданные величины.
+
+Среднее:
+
+```{r}
+result.mean <- round(mean(df$Cores), 1)
+print(result.mean)
+```
+Дисперсия:
+```{r}
+result.var <- round(var(df$Cores), 1)
+print(result.var)
+```
+Асимметрия:
+```{r}
+library(moments)
+result.skewness <- round(skewness(df$Cores), 1)
+print(result.skewness)
+```
+Эксцесс:
+```{r}
+result.kurtosis <- round(kurtosis(df$Cores), 1)
+print(result.kurtosis)
+```
+
+Сведём результаты в таблицу:
+```{r}
+result_df <- data.frame(result.mean, result.var, result.skewness, result.kurtosis)
+colnames(result_df) <- c('Среднее', 'Дисперсия', 'Асимметрия', 'Эксцесс')
+print(result_df)
+```
+
+Построим диаграмму рассеяния:
+```{r}
+plot(df$Anomalies, df$Cores, main="Диаграмма рассеяния",
+   xlab="Количество аномалий", ylab="Количество ядер", pch=19) 
+```
