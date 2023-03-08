@@ -1,12 +1,11 @@
 ---
-title: "СтатМетОбрИнф23 - Задание 1"
+title: "Методы статистической обработки информации - Задание 1"
 author: "Ершов А. С., гр. 22.М04-мм"
 output:
   pdf_document:
     latex_engine: xelatex
     includes:
       in_header: "preamble.tex"
-  html_notebook: default
   html_document:
     df_print: paged
 ---
