@@ -11,7 +11,7 @@ output:
     df_print: paged
 ---
 
-Задание: по реальным данным найти среднее, дисперсию, рассеяние, ассиметрию, эксцесс.
+Задание: по реальным данным найти среднее, медиану, моду, дисперсию, рассеяние, ассиметрию, эксцесс.
 
 ![](tasks.png){width="400px"}
 
@@ -25,45 +25,56 @@ output:
 
 ```{r}
 data <- rep(c(0,1,2,3,4,5),times=c(26,36,19,10,5,4))
+data
 ```
 
 Рассчитаем заданные величины.
 
-Среднее:
-
+*Среднее*:
 ```{r}
 result.mean <- round(mean(data), 1)
 print(result.mean)
 ```
-Дисперсия:
+*Медиана*:
+```{r}
+result.median <- round(median(data), 1)
+print(result.median)
+```
+*Мода*:
+```{r}
+result.mode <- unique(data)
+result.mode[which.max(tabulate(match(data, result.mode)))]
+```
+*Дисперсия*:
 ```{r}
 result.var <- round(var(data), 1)
 print(result.var)
 ```
-Асимметрия:
+*Асимметрия*:
 ```{r}
 library(moments)
 result.skewness <- round(skewness(data), 1)
 print(result.skewness)
 ```
-Эксцесс:
+Ассиметрия получилась больше 0, то есть "правый хвост" распределения длиннее левого, правосторонняя асимметрия.
+
+*Эксцесс*:
 ```{r}
 result.kurtosis <- round(kurtosis(data), 1)
 print(result.kurtosis)
 ```
+Эксцесс получился больше 0, хвосты распределения "легче", а пик острее, чем у нормального распределения.
+
+*Рассеяние*:
+```{r}
+result.scattering <- round(result.var / result.mean, 1)
+print(result.scattering)
+```
+
 
 Сведём результаты в таблицу:
 ```{r}
-result_df <- data.frame(result.mean, result.var, result.skewness, result.kurtosis)
-colnames(result_df) <- c('Среднее', 'Дисперсия', 'Асимметрия', 'Эксцесс')
+result_df <- data.frame(result.mean, result.var, result.skewness, result.kurtosis, result.scattering)
+colnames(result_df) <- c('Среднее', 'Дисперсия', 'Асимметрия', 'Эксцесс', 'Рассеяние')
 print(result_df)
-```
-
-Построим диаграмму рассеяния:
-```{r}
-Anomalies <- c(0,1,2,3,4,5)
-Cores <- c(26,36,19,10,5,4)
-df <- data.frame(Anomalies, Cores)
-plot(df$Anomalies, df$Cores,
-   xlab="Amount of anomalies", ylab="Number of cores", pch=19) 
 ```
