@@ -46,6 +46,8 @@ result.mode <- unique(data)
 result.mode <- result.mode[which.max(tabulate(match(data, result.mode)))]
 print(result.mode)
 ```
+Наиболее часто встречающийся в выборке элемент - 1, по условию он встречается 36 раз.
+
 *Дисперсия*:
 ```{r}
 result.var <- round(var(data), 1)
@@ -72,10 +74,15 @@ result.scattering <- round(result.var / result.mean, 1)
 print(result.scattering)
 ```
 
-
 Сведём результаты в таблицу:
 ```{r}
 result_df <- data.frame(result.mean, result.median, result.mode, result.var, result.skewness, result.kurtosis, result.scattering)
 colnames(result_df) <- c('Среднее', 'Медиана', 'Мода', 'Дисперсия', 'Асимметрия', 'Эксцесс', 'Рассеяние')
 print(result_df)
+```
+
+Построим график функции эмпирического распределения:
+```{r}
+ecdf_res <- ecdf(data) 
+plot(ecdf_res, xlim=c(-0.1, 5.1), pch = 17, main="", xlab="", ylab="", col="blue")
 ```
