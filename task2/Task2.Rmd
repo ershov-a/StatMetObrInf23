@@ -1,0 +1,161 @@
+---
+title: "Методы статистической обработки информации. Задание 2"
+author: "Ершов А. С., гр. 22.М04-мм"
+output:
+  html_notebook: default
+  html_document:
+    df_print: paged
+  pdf_document:
+    latex_engine: xelatex
+    includes:
+      in_header: "preamble.tex"
+---
+
+# Вариант 4
+
+## Задание:
+
+Распределение хи-квадрат. Промоделировать выборку с заданным законом распределения, построить гистограмму, оценить параметры по методу моментов и максимального правдоподобия, изобразить на гистограмме плотности распределения, соответствующие оценкам из разных методов. Применить статистику хи-квадрат для проверки согласия эмпирического и теоретического распределений.
+
+---
+
+Промоделируем тестовые данные с распределением хи-квадрат с параметром $k=3$.
+
+```{r}
+k = 3
+n = 100
+set.seed(120) 
+X <- rchisq(n, k)
+X
+```
+Построим гистограмму:
+```{r}
+hist(X, freq = FALSE)
+```
+Математическое ожидание:
+```{r}
+mu. <- mean(X)
+mu.
+```
+Дисперсия:
+```{r}
+dispersion <- sd(X) ^ 2
+dispersion
+```
+
+## Оценка параметров
+
+Оценим параметры распределения методом моментом и методом максимального правдоподобия.
+
+**Метод моментов**
+
+$$ E[X] = k ⇒ k = E[X]$$
+Оценим параметр с помощью первого момента:
+```{r}
+k_estimation1 <- mu.
+k_estimation1
+```
+Оценка параметра близка к заданной при моделировании тестовых данных.
+
+Построим графики гипотетического распределения (красный) и распределения с параметром, оцененным методом моментов (зелёный):
+```{r}
+f <- function(x) dchisq(x, k)
+f1 <- function(x) dchisq(x, k_estimation1)
+hist(X, freq=FALSE)
+curve(f, add=TRUE, col=2, lty=5)
+curve(f1, add=TRUE, col=3, lty=6)
+legend('topright', c("Hypotetic","Estimation"), col = c(2,3), lty = c(5, 6))
+```
+По графику видно, что значения распределения с параметром, полученным с помощью метода моментов, близки к значениям гипотетического распрделения.
+
+**Метод максимального правдоподобия**
+
+Функция правдоподобия:
+```{r}
+Func.prob.log <- function(x, df) -sum(dchisq(X, df = df, log = TRUE))
+```
+Оценим параметр:
+```{r}
+k_estimation2 = optimize(f = Func.prob.log, x = X, interval = c(0, k_estimation1))$minimum
+k_estimation2
+```
+Значение параметра близко к гипотетическому (3), но для тестовой выборки метод моментов оценил параметр точнее.
+
+Построим графики гипотетического распределения (красный), распределения с параметром, оцененным методом моментов (зелёный) и распределения с параметром, оцененным методом максимального правдоподобия (синий):
+```{r}
+f <- function(x) dchisq(x, k)
+f1 <- function(x) dchisq(x, k_estimation1)
+f2 <- function(x) dchisq(x, k_estimation2)
+
+hist(X, freq=FALSE)
+curve(f, add=TRUE, col=2, lty=5)
+curve(f1, add=TRUE, col=3, lty=6)
+curve(f2, add=TRUE, col=4, lty=4)
+legend('topright', c("Hypotetic","Estimation MM","Estimation MMP"), col = c(2,3,4), lty = c(5, 6,4))
+```
+По графику подтверждаются предыдущие выводы: оценки параметра близки к его значению, метод максимального правдоподобия показал лучшую оценку.
+
+## Проверка гипотезы согласия
+
+Используем критерий хи-квадрат для проверки гипотезы согласия.
+```{r}
+h <- hist(X, plot = FALSE)
+```
+
+Эмпирические частоты:
+```{r}
+n.i <- sapply(seq(length(h$breaks) - 1) + 1, function(i)
+length(X[X < h$breaks[i] & X >= h$breaks[i - 1]]))
+```
+
+Гипотетические частоты:
+```{r}
+p.i <- sapply(seq(length(h$breaks) - 1) + 1,function(i)
+pchisq(h$breaks[i], k_estimation2) - pchisq(h$breaks[i - 1], k_estimation2))
+sum(p.i)
+```
+```{r}
+p.i[1] <- pchisq(h$breaks[2], k_estimation2)
+p.i[length(p.i)] <- 1 - pchisq(h$breaks[length(h$breaks)-1], k_estimation2)
+sum(p.i)
+```
+Проверим условие $n * p_i > 5$:
+```{r}
+tab <- cbind(h$counts, p.i * length(X))
+tab
+```
+```{r}
+t1 <- cumsum(tab[,2])
+T1 <- min(which(t1 > 5))
+t1
+```
+```{r}
+t2 <- cumsum(tab[seq(nrow(tab),1, -1), 2])
+t2
+```
+```{r}
+T2 <- min(which(t1 > 5))
+T2 <- nrow(tab) - T2
+T2
+```
+```{r}
+Tab<-apply(tab, 2, function(x) c(sum(x[seq(T1)]), x[c((T1 + 1):T2)], sum(x[c((T2 + 1):nrow(tab))])))
+Tab
+```
+Статистика хи-квадрат:
+```{r}
+chi2 <- sum(apply(Tab, 1, function(x) (x[1] - x[2]) ^ 2 / x[2]))
+chi2
+```
+Доверительный уровень вероятности:
+```{r}
+pvalue <- 1 - pchisq(chi2, nrow(Tab) - 3);
+print(paste("p-value", round(pvalue, 4), sep=" = "))
+```
+График:
+```{r}
+hist(X, freq = FALSE)
+abline(h = pvalue, col = 2)
+```
+Значение доверительного интервала больше 0.05, изначальная гипотеза не отвергается.
+
