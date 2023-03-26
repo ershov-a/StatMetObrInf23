@@ -1,0 +1,184 @@
+---
+title: "Методы статистической обработки информации. Задание 3"
+author: "Ершов А. С., гр. 22.М04-мм"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    includes:
+      in_header: "preamble.tex"
+  html_document:
+    df_print: paged
+  html_notebook: default
+---
+
+# Вариант (b)
+$$ f(x, a, b) = ae^x + b, \hspace{2mm} a = 0.4, b = 1, ε = 0.8 $$
+
+## Задание:
+
+1. Промоделировать нелинейную модель $y=f(x,a,b)+δ$ с несмещенной нормально распределенной ошибкой, дисперсия которой равна $ε$, считая xстандартно нормально распределенной случайной величиной.
+2. Оценить параметры нелинейной модели по методу наименьших квадратов (численно). Применить к модельным данным линейную модель и оценить параметры. Построить на двумерной диаграмме основную и линейную модель. Сравнить невязки для обеих моделей.
+3. Для линейной модели выполнить дисперсионный анализ, проверить значимость прогноза и коэффициентов регрессии. Сравнить непосредственные вычисления с результатами встроенной функции.
+
+---
+
+Нелинейная модель $$y_i = ax_i^2 + bx_i + \delta_i,\hspace{3mm} \delta_i ~ N(0,\sigma) $$
+
+Модель одномерной линейной регрессии $$ y_i = \alpha + \beta x_i + \delta_i, \hspace{3mm} \delta_i ~ N(0,\sigma) $$
+
+```{r}
+# Задаём линейную и нелинейную модель с остаточными суммами квадратов
+N <- 100
+f <- function(x, ab)
+  ab[1] * exp(x) + ab[2]
+L <- function(X, Y, ab)
+  sum((Y - f(X, ab)) ^ 2)
+
+f0 <- function(x, AB)
+  AB[1] + AB[2] * x
+L0 <- function(X, Y, AB)
+  sum((Y - f0(X, AB)) ^ 2)
+
+# Задаем параметры нелинейной модели
+ab <- c(0.4, 1)
+eps <- 0.8
+
+# Моделируем данные нелинейной модели
+X <- rnorm(N)
+Y <- f(X, ab) + rnorm(N, 0, eps)
+
+SLM <- summary(lm(Y ~ X))
+AB <- SLM$coefficients[, 1]
+Y. <- f0(X, AB)
+```
+Оценка параметров $\hat{\alpha}$, $\hat{\beta}$
+$$ \hat{\alpha} = \bar{y} - \hat{\beta} \bar{x},\hspace{3mm} \hat{\beta} = \frac{\sum_i{x_i y_i - n \bar{x} \bar{y} }}{\sum_i{x_i^2 - n \bar{x}^2 }}. $$
+```{r}
+# Оцениваем параметры линейной модели
+EstLM <- function(X, Y)
+{
+  b. <- (sum(X * Y) - N * mean(X) * mean(Y)) / (sum(X ^ 2) - N * mean(X) ^ 2)
+  a. <- mean(Y) - AB[2] * mean(X)
+  c(a., b.)
+}
+AB <- EstLM(X, Y)
+AB
+```
+Наилучший линейный прогноз $$ \hat{y_i} = \hat{\alpha} + \hat{\beta} y_i $$
+```{r}
+Y. <- f0(X, AB)
+```
+
+Вычислим источники вариации - общий $Q_T$, обусловленный регрессией $Q_R$, невязка $Q_E$ и коэффициент детерминации $R^2$.
+$$ Q_t = \sum^{n}_{i=1}(y_i - \bar{y})^2, \hspace{2mm} Q_R = \sum^{n}_{i=1}(\hat{y_i} - \bar{y})^2, \hspace{2mm} Q_E = \sum^{n}_{i=1}(y_i - \hat{y})^2, \hspace{2mm} Q_T = Q_R + Q_E, \hspace{2mm} R^2 = \frac{Q_R}{Q_T}  $$
+```{r}
+QT <- sum((Y - mean(Y)) ^ 2)
+QT
+```
+```{r}
+QR <- sum((Y. - mean(Y)) ^ 2)
+QR
+```
+```{r}
+QE <- sum((Y - Y.) ^ 2)
+QE
+```
+```{r}
+R2 <- QR / QT
+R2
+```
+```{r}
+c(QT, QE + QR)
+```
+
+$$ S^2 = \frac{Q_E}{n-2}, \hspace{2mm}
+S^2_\alpha = \frac{S^2}{[x,x]} \cdot \frac{\sum_i{x^2_i}}{n}, \hspace{2mm}
+S^2_\beta = \frac{S^2}{[x,x]}, \hspace{2mm}
+[x,x] = \sum_{i = 1}^{n}{(x_i - \hat{x})}^2.$$
+```{r}
+xx <- sum((X - mean(X)) ^ 2)
+xx
+```
+```{r}
+S2 <- QE / (N - 2)
+S2a <- S2 * sum(X ^ 2) / N / xx
+S2b <- S2 / xx
+```
+Статистики для проверки значимости прогноза и коэффициентов регрессии:
+$$ F = \frac{Q_R}{Q_e}(n-2) \sim \mathbf{F} (1, n - 2), \hspace{2mm}
+T_\alpha = \frac{\hat{\alpha} - \alpha}{S_\alpha} \sim \mathbf{T} (n - 2), \hspace{2mm}
+T_\beta = \frac{\hat{\beta} - \beta}{S_\beta} \sim \mathbf{T} (n - 2).$$
+```{r}
+F. <- QR / QT * (N - 2)
+F.
+```
+```{r}
+Pf <- 1 - pf(F., 1, N - 2)
+Pf
+```
+```{r}
+Ta <- AB[1] / sqrt(S2a)
+Ta
+```
+```{r}
+Tb <- AB[2] / sqrt(S2b)
+Tb
+```
+```{r}
+Pa <- 2 * (1 - pt(abs(Ta), N - 2))
+Pa
+```
+```{r}
+Pb <- 2 * (1 - pt(abs(Tb), N - 2))
+Pb
+```
+```{r}
+# Проверяем при помощи встроенной помощи
+LM <- lm(Y ~ X)
+SLM <- summary(LM)
+
+cbind(AB, SLM$coefficients[, 1])
+```
+```{r}
+c(R2 = R2, SLM$r.squared)
+```
+```{r}
+df <- SLM$df[seq(2)]
+df
+```
+```{r}
+Pf.lm <- (1 - pf(SLM$fstatistic[1], df[1] - 1, df[2]))
+cbind(c(Pf = Pf, Pa = Pa, Pb = Pb), c(Pf = Pf.lm, SLM$coefficients[, 4]))
+```
+```{r}
+# Оцениваем параметры нелинейной модели
+NLM <- nlm(function(ab)
+  L(X, Y, ab), c(1, 1))
+ab. <- NLM$estimate
+cbind(ab. = ab., ab = ab)
+```
+```{r}
+plot(X, Y)
+f_ <- function(x)
+  f(x, ab)
+curve(f_, -3, 3, add = TRUE, col = 2)
+f_ <- function(x)
+  f(x, ab.)
+curve(f_, -3, 3, add = TRUE, col = 3)
+f_ <- function(x)
+  f0(x, AB)
+curve(f_, -3, 3, add = TRUE, col = 4, lty = 2)
+legend('bottomright',
+       c('hyp', 'mnk', 'linear'),
+       pch = 20,
+       col = c(2, 3, 4))
+```
+```{r}
+# Ошибки
+c(
+  Q.linear = L0(X, Y, AB),
+  Q.model = L(X, Y, ab),
+  Q.model.hat = L(X, Y, ab.)
+)
+```
+
